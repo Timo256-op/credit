@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Credit Scoring — Predict Default</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+    }
+    h1 {
+      margin: 0 0 10px 0;
+      color: #333;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin: 0 0 30px 0;
+      font-size: 14px;
+    }
+    .form-section {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 30px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+      font-size: 14px;
+    }
+    input[type="number"],
+    input[type="text"],
+    select {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    input[type="number"]:focus,
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 25px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #predict {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      flex: 1;
+      min-width: 150px;
+    }
+    #predict:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    #predict:active {
+      transform: translateY(0);
+    }
+    #reset {
+      background: #e9ecef;
+      color: #333;
+      flex: 0 1 auto;
+    }
+    #reset:hover {
+      background: #dee2e6;
+    }
+    .result-section {
+      margin-top: 30px;
+    }
+    .result-section h3 {
+      margin: 0 0 15px 0;
+      color: #333;
+    }
+    #result {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 20px;
+      font-family: "Monaco", "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100px;
+      max-height: 300px;
+      overflow: auto;
+      color: #333;
+    }
+    .loading {
+      color: #667eea;
+      font-weight: 500;
+    }
+    .success {
+      color: #28a745;
+      font-weight: 500;
+    }
+    .error {
+      color: #dc3545;
+      font-weight: 500;
+    }
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #667eea;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💳 Credit Scoring Predictor</h1>
+    <p class="subtitle">Enter transaction details to predict loan default risk</p>
+
+    <div class="info-box">
+      <strong>ℹ️ Tip:</strong> Fill in the fields below. Missing values will be automatically filled with defaults. Probability closer to 1 = higher risk of default.
+    </div>
+
+    <form id="predictionForm" class="form-section">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="amount">Transaction Amount</label>
+          <input type="number" id="amount" name="Amount" placeholder="e.g., 2500" step="0.01">
+        </div>
+        <div class="form-group">
+          <label for="transactionCount">Transaction Count</label>
+          <input type="number" id="transactionCount" name="TransactionCount" placeholder="e.g., 3" step="1">
+        </div>
+        <div class="form-group">
+          <label for="value">Transaction Value</label>
+          <input type="number" id="value" name="Value" placeholder="e.g., 2600" step="0.01">
+        </div>
+        <div class="form-group">
+          <label for="amountLoan">Loan Amount</label>
+          <input type="number" id="amountLoan" name="AmountLoan" placeholder="e.g., 5000" step="0.01">
+        </div>
+        <div class="form-group">
+          <label for="transactionStatus">Transaction Status</label>
+          <select id="transactionStatus" name="TransactionStatus">
+            <option value="">-- Select --</option>
+            <option value="0">Pending</option>
+            <option value="1">Completed</option>
+            <option value="2">Failed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="submit" id="predict">🚀 Predict Default</button>
+        <button type="reset" id="reset">🔄 Clear Form</button>
+      </div>
+    </form>
+
+    <div class="result-section">
+      <h3>📊 Prediction Result</h3>
+      <pre id="result">(awaiting input...)</pre>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('predictionForm');
+    const resultEl = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Collect form data
+      const formData = new FormData(form);
+      const json = {};
+      
+      for (let [key, value] of formData.entries()) {
+        if (value.trim() !== '') {
+          json[key] = isNaN(value) ? value : parseFloat(value);
+        }
+      }
+
+      resultEl.textContent = 'Sending...';
+      resultEl.className = 'loading';
+
+      try {
+        const res = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(json)
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          resultEl.textContent = '❌ Error: ' + data.error;
+          resultEl.className = 'error';
+        } else {
+          const prediction = data.default_prediction === 1 ? '⚠️ HIGH RISK' : '✅ LOW RISK';
+          const probability = (data.default_probability * 100).toFixed(2);
+          resultEl.textContent = `${prediction}\n\nDefault Risk: ${probability}%\n\nFull Response:\n${JSON.stringify(data, null, 2)}`;
+          resultEl.className = 'success';
+        }
+      } catch (err) {
+        resultEl.textContent = '❌ Request failed: ' + err.message;
+        resultEl.className = 'error';
+      }
+    });
+  </script>
+</body>
+</html>
